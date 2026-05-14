@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fono Aprende - Sesión en un Click</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --sky: #8DD4E8;
+            --sky-light: #B5E0EF;
+            --sky-pale: #E5F6FA;
+            --rose: #E5C5D9;
+            --rose-pale: #F5EBF0;
+            --lilac: #D9C5E2;
+            --gradient: linear-gradient(135deg, #B5E0EF 0%, #D9C5E2 100%);
+            --border: #E8EFF5;
+            --text: #4A5568;
+            --muted: #8492A8;
+            --faint: #B0C4D4;
+            --bg: linear-gradient(135deg, #E5F6FA 0%, #F2F9FB 50%, #F5EBF0 100%);
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 12px;
+            font-weight: 400;
+        }
+        .header {
+            background: linear-gradient(135deg, #B5E0EF 0%, #C8DEEA 50%, #D9C5E2 100%);
+            border-radius: 20px;
+            padding: 28px 24px;
+            margin: 0 8px 20px 8px;
+            box-shadow: 0 6px 24px rgba(139, 180, 210, 0.15);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 120px;
+            overflow: hidden;
+        }
+        .flowers-svg {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 140px;
+            height: 100px;
+            opacity: 0.6;
+        }
+        .header-content {
+            position: relative;
+            z-index: 2;
+            flex: 1;
+            min-width: 0;
+        }
+        .header-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 4px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            letter-spacing: -0.5px;
+        }
+        .header-subtitle {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.85);
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            display: block;
+        }
+        .container {
+            background: white;
+            border-radius: 22px;
+            padding: 28px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            border-bottom: 1.5px solid var(--border);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab {
+            padding: 11px 18px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1.5px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.87rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+            border-radius: 10px 10px 0 0;
+        }
+        .tab:hover { color: var(--sky); background: var(--sky-pale); }
+        .tab.active { color: var(--sky); border-bottom-color: var(--sky); font-weight: 700; }
+        .vista { display: none; }
+        .vista.active { display: block; }
+        .titulo { font-size: 1.4rem; font-weight: 600; color: var(--sky); margin-bottom: 22px; letter-spacing: -0.3px; }
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--sky); margin-bottom: 8px; }
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
+            background: #FCFDFE;
+            transition: all 0.2s;
+            color: var(--text);
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--sky-light);
+            box-shadow: 0 0 0 4px rgba(181, 224, 239, 0.12);
+            background: white;
+        }
+        .form-textarea { min-height: 100px; resize: vertical; }
+        .btn {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 14px 26px;
+            border-radius: 14px;
+            font-size: 0.93rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            box-shadow: 0 3px 12px rgba(139, 180, 210, 0.2);
+            width: 100%;
+            transition: all 0.25s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(139, 180, 210, 0.25); }
+        .btn-secondary {
+            background: white;
+            color: var(--sky);
+            border: 1.5px solid var(--border);
+            border-radius: 11px;
+            padding: 9px 16px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.2s;
+            width: auto;
+        }
+        .btn-secondary:hover { border-color: var(--sky-light); background: var(--sky-pale); }
+        .btn-small { padding: 6px 12px; font-size: 0.78rem; }
+        .card {
+            background: #FCFDFE;
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(139, 180, 210, 0.12); border-color: var(--sky-light); }
+        .card-header { font-weight: 600; color: var(--sky); margin-bottom: 6px; font-size: 0.97rem; }
+        .card-info { font-size: 0.8rem; color: var(--muted); margin: 3px 0; font-weight: 400; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 18px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            max-width: 580px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.12);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1.5px solid var(--border);
+        }
+        .modal-title { font-size: 1.1rem; font-weight: 600; color: var(--sky); }
+        .modal-close { background: none; border: none; font-size: 1.3rem; color: var(--faint); cursor: pointer; }
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--faint); }
+        .empty-icon { font-size: 3.2rem; margin-bottom: 14px; }
+        .edad-display { font-size: 1.05rem; font-weight: 600; color: var(--sky); padding: 12px 14px; background: var(--sky-pale); border-radius: 12px; margin-top: 6px; border: 1.5px solid var(--sky-light); }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+        .progress-bar { width: 100%; height: 20px; background: var(--border); border-radius: 20px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #8DD4E8, #10b981); width: 0%; transition: width 0.5s ease; border-radius: 20px; }
+        .progress-text { font-size: 0.85rem; font-weight: 600; color: var(--sky); margin-top: 6px; }
+        .preview-box { background: var(--sky-pale); border: 1.5px solid var(--sky-light); border-radius: 14px; padding: 16px; margin: 16px 0; font-size: 0.84rem; color: var(--text); line-height: 1.7; font-weight: 500; white-space: pre-wrap; max-height: 250px; overflow-y: auto; font-family: monospace; }
+        .share-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+        .share-btn { padding: 12px 16px; border: 1.5px solid var(--border); background: white; border-radius: 12px; cursor: pointer; font-family: Poppins; font-weight: 600; font-size: 0.88rem; color: var(--sky); transition: all 0.2s; }
+        .share-btn:hover { background: var(--sky-pale); border-color: var(--sky-light); }
+        .share-btn.primary { background: var(--gradient); color: white; border: none; }
+        .share-btn.primary:hover { transform: translateY(-2px); }
+        .obj-card {
+            background: white;
+            border-left: 3px solid var(--sky-light);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .obj-card.logrado { border-left-color: #a7f3d0; }
+        .obj-card.apoyo { border-left-color: #bfdbfe; }
+        .obj-card.parcial { border-left-color: #fcd34d; }
+        .obj-card.no { border-left-color: #fca5a5; }
+        .obj-num { font-weight: 700; color: var(--sky); min-width: 20px; font-size: 0.9rem; }
+        .obj-text { font-size: 0.85rem; color: var(--text); flex: 1; font-weight: 500; line-height: 1.3; }
+        .obj-comentario { font-size: 0.78rem; color: var(--muted); font-style: italic; margin-top: 4px; padding: 6px 8px; background: var(--sky-pale); border-radius: 6px; border-left: 2px solid var(--sky); }
+        .obj-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .obj-badge { font-size: 0.73rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: var(--sky-pale); color: var(--sky); }
+        @media (max-width: 640px) {
+            .header { padding: 24px 18px; min-height: 120px; }
+            .header-title { font-size: 1.8rem; }
+            .container { padding: 18px; }
+            .btn-group { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="auth-screen" style="position: fixed; inset: 0; min-height: 100vh; justify-content: center; align-items: center; padding: 20px; background: var(--bg);"">
+    <div style="background: white; border-radius: 24px; padding: 40px; max-width: 400px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
+        
+        <!-- LOGIN -->
+        <div id="login-form">
+            <div style="text-align: center; margin-bottom: 32px;">
+                <svg viewBox="0 0 200 80" style="height: 60px; width: auto; margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto;">
+                    <circle cx="40" cy="40" r="30" fill="#8DD4E8" opacity="0.8"/>
+                    <circle cx="100" cy="40" r="30" fill="#D9C5E2" opacity="0.8"/>
+                    <circle cx="160" cy="40" r="30" fill="#E5C5D9" opacity="0.8"/>
+                    <text x="100" y="48" font-family="Poppins" font-size="18" font-weight="700" text-anchor="middle" fill="#4A5568">Fono</text>
+                </svg>
+                <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--sky); margin-bottom: 6px;">Fono Aprende</h1>
+                <p style="color: var(--muted); font-size: 0.9rem;">Sesión en un Click</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="login-email" class="form-input" placeholder="tu@email.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Contraseña</label>
+                <input type="password" id="login-pass" class="form-input" placeholder="••••••••">
+            </div>
+            <div id="login-error" style="color: #dc2626; font-size: 0.85rem; margin-bottom: 14px; font-weight: 500;"></div>
+            
+            <button class="btn" onclick="handleLogin()">🔓 Ingresar</button>
+            
+            <p style="text-align: center; margin-top: 18px; font-size: 0.9rem; color: var(--muted);">
+                ¿Sin cuenta? <button onclick="toggleAuthForm()" style="background: none; border: none; color: var(--sky); cursor: pointer; text-decoration: underline; font-weight: 600;">Crear una</button>
+            </p>
+        </div>
+
+        <!-- REGISTRO -->
+        <div id="register-form" style="display: none;">
+            <div style="text-align: center; margin-bottom: 32px;">
+                <svg viewBox="0 0 200 80" style="height: 60px; width: auto; margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto;">
+                    <circle cx="40" cy="40" r="30" fill="#8DD4E8" opacity="0.8"/>
+                    <circle cx="100" cy="40" r="30" fill="#D9C5E2" opacity="0.8"/>
+                    <circle cx="160" cy="40" r="30" fill="#E5C5D9" opacity="0.8"/>
+                    <text x="100" y="48" font-family="Poppins" font-size="18" font-weight="700" text-anchor="middle" fill="#4A5568">Fono</text>
+                </svg>
+                <h1 style="font-size: 1.8rem; font-weight: 800; color: var(--sky); margin-bottom: 6px;">Crear Cuenta</h1>
+                <p style="color: var(--muted); font-size: 0.9rem;">Fono Aprende</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Nombre Completo</label>
+                <input type="text" id="register-nombre" class="form-input" placeholder="Tu nombre">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="register-email" class="form-input" placeholder="tu@email.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Contraseña</label>
+                <input type="password" id="register-pass" class="form-input" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+                <label class="form-label">RNP (opcional)</label>
+                <input type="text" id="register-rnp" class="form-input" placeholder="123456">
+            </div>
+            <div id="register-error" style="color: #dc2626; font-size: 0.85rem; margin-bottom: 14px; font-weight: 500;"></div>
+            
+            <button class="btn" onclick="handleRegister()">✅ Crear Cuenta</button>
+            
+            <p style="text-align: center; margin-top: 18px; font-size: 0.9rem; color: var(--muted);">
+                ¿Ya tienes cuenta? <button onclick="toggleAuthForm()" style="background: none; border: none; color: var(--sky); cursor: pointer; text-decoration: underline; font-weight: 600;">Ingresar</button>
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<div id="app-screen">
+
+<div class="header">
+    <svg class="flowers-svg" viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg">
+        <!-- Flor 1: Izquierda (tipo tulipán) -->
+        <g>
+            <!-- Tallo -->
+            <path d="M 50 130 Q 48 100 50 70 Q 52 50 50 20" stroke="#A8D5BA" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8"/>
+            <!-- Hojas -->
+            <ellipse cx="42" cy="80" rx="4" ry="14" fill="#B8E6CC" opacity="0.7" transform="rotate(-35 42 80)"/>
+            <ellipse cx="58" cy="85" rx="4" ry="14" fill="#A8D5BA" opacity="0.65" transform="rotate(35 58 85)"/>
+            <!-- Pétalos del tulipán -->
+            <ellipse cx="50" cy="15" rx="6" ry="12" fill="#E5C5D9" opacity="0.85" transform="rotate(0 50 15)"/>
+            <ellipse cx="42" cy="22" rx="5" ry="11" fill="#D9A8C5" opacity="0.8" transform="rotate(-28 42 22)"/>
+            <ellipse cx="58" cy="22" rx="5" ry="11" fill="#E8B5D0" opacity="0.8" transform="rotate(28 58 22)"/>
+        </g>
+        
+        <!-- Flor 2: Centro (tipo flor con estambres) -->
+        <g>
+            <!-- Tallo -->
+            <path d="M 150 135 Q 148 105 150 75 Q 152 50 150 25" stroke="#8DD4E8" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.75"/>
+            <!-- Hojas del tallo -->
+            <ellipse cx="140" cy="90" rx="5" ry="16" fill="#B5E0EF" opacity="0.6" transform="rotate(-40 140 90)"/>
+            <ellipse cx="160" cy="95" rx="5" ry="16" fill="#A0D4E8" opacity="0.6" transform="rotate(40 160 95)"/>
+            <ellipse cx="142" cy="65" rx="4" ry="14" fill="#B5E0EF" opacity="0.5" transform="rotate(-25 142 65)"/>
+            <ellipse cx="158" cy="70" rx="4" ry="14" fill="#A0D4E8" opacity="0.5" transform="rotate(25 158 70)"/>
+            <!-- Centro de la flor (óvalo lila) -->
+            <rect x="138" y="15" width="24" height="18" rx="8" fill="#D9C5E2" opacity="0.85"/>
+            <!-- Pétalos azules -->
+            <ellipse cx="130" cy="18" rx="6" ry="10" fill="#8DD4E8" opacity="0.8" transform="rotate(-35 130 18)"/>
+            <ellipse cx="170" cy="18" rx="6" ry="10" fill="#8DD4E8" opacity="0.8" transform="rotate(35 170 18)"/>
+            <ellipse cx="125" cy="28" rx="5" ry="9" fill="#9CDDF0" opacity="0.75" transform="rotate(-50 125 28)"/>
+            <ellipse cx="175" cy="28" rx="5" ry="9" fill="#9CDDF0" opacity="0.75" transform="rotate(50 175 28)"/>
+            <!-- Pequeños estambres -->
+            <circle cx="145" cy="20" r="2" fill="#FFD700" opacity="0.7"/>
+            <circle cx="155" cy="20" r="2" fill="#FFD700" opacity="0.7"/>
+            <circle cx="150" cy="28" r="1.5" fill="#FFC700" opacity="0.6"/>
+        </g>
+        
+        <!-- Flor 3: Derecha (tipo flor pequeña) -->
+        <g>
+            <!-- Tallo -->
+            <path d="M 250 130 Q 248 105 250 75 Q 252 55 250 25" stroke="#9CDDF0" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8"/>
+            <!-- Hojas -->
+            <ellipse cx="240" cy="95" rx="4" ry="15" fill="#B5E0EF" opacity="0.65" transform="rotate(-38 240 95)"/>
+            <ellipse cx="260" cy="90" rx="4" ry="15" fill="#A0D4E8" opacity="0.65" transform="rotate(38 260 90)"/>
+            <!-- Pétalos pequeños -->
+            <ellipse cx="250" cy="18" rx="4.5" ry="8" fill="#8DD4E8" opacity="0.85" transform="rotate(0 250 18)"/>
+            <ellipse cx="244" cy="22" rx="4" ry="7.5" fill="#9CDDF0" opacity="0.8" transform="rotate(-35 244 22)"/>
+            <ellipse cx="256" cy="22" rx="4" ry="7.5" fill="#8FCCE8" opacity="0.8" transform="rotate(35 256 22)"/>
+            <ellipse cx="240" cy="30" rx="3.5" ry="7" fill="#A0D4E8" opacity="0.75" transform="rotate(-65 240 30)"/>
+            <ellipse cx="260" cy="30" rx="3.5" ry="7" fill="#9CDDF0" opacity="0.75" transform="rotate(65 260 30)"/>
+            <!-- Centro -->
+            <circle cx="250" cy="22" r="2.5" fill="#FFE066" opacity="0.8"/>
+        </g>
+    </svg>
+    <div class="header-content">
+        <div class="header-title" id="saludo">¡Hola de nuevo! 🍃</div>
+        <div class="header-subtitle">Sesión en un Click</div>
+    </div>
+</div>
+
+<!-- MINI DASHBOARD -->
+<div style="margin: 0 8px 20px 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+    <div style="background: white; border: 1.5px solid var(--border); border-radius: 14px; padding: 14px; text-align: center;">
+        <div style="font-size: 0.8rem; color: var(--muted); font-weight: 600; margin-bottom: 6px;">📅 Hoy</div>
+        <div id="dashboard-fecha" style="font-size: 1rem; color: var(--sky); font-weight: 700;">Cargando...</div>
+    </div>
+    <div style="background: white; border: 1.5px solid var(--border); border-radius: 14px; padding: 14px; text-align: center;">
+        <div style="font-size: 0.8rem; color: var(--muted); font-weight: 600; margin-bottom: 6px;">👥 Pacientes</div>
+        <div id="dashboard-pacientes" style="font-size: 1.4rem; color: var(--sky); font-weight: 700;">0</div>
+    </div>
+    <div style="background: white; border: 1.5px solid var(--border); border-radius: 14px; padding: 14px; text-align: center;">
+        <div style="font-size: 0.8rem; color: var(--muted); font-weight: 600; margin-bottom: 6px;">⏰ Próxima</div>
+        <div id="dashboard-proxima" style="font-size: 0.9rem; color: var(--sky); font-weight: 600;">Sin sesiones</div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab active" onclick="cambiarVista('pacientes')">👥 Pacientes</button>
+        <button class="tab" onclick="cambiarVista('planificacion')">📊 Planificación</button>
+        <button class="tab" onclick="cambiarVista('sesion')">📝 Sesión</button>
+        <button class="tab" onclick="cambiarVista('historial')">📅 Historial</button>
+        <button class="tab" onclick="cambiarVista('agenda')">🗓️ Agenda</button>
+        <button class="tab" onclick="cambiarVista('config')">⚙️ Config</button>
+    </div>
+
+    <!-- PACIENTES -->
+    <div id="vista-pacientes" class="vista active">
+        <div class="titulo">👥 Mis Pacientes</div>
+        <div class="form-group"><label class="form-label">Nombre Completo *</label><input type="text" id="nombre" class="form-input" placeholder="Nombre del paciente"></div>
+        <div class="form-group">
+            <label class="form-label">Fecha de Nacimiento</label>
+            <input type="date" id="nacimiento" class="form-input" onchange="calcularEdadDisplay()">
+            <div id="edad-display"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="telefono" class="form-input" placeholder="+56912345678"></div>
+        <div class="form-group"><label class="form-label">Email Apoderado</label><input type="email" id="email" class="form-input" placeholder="apoderado@ejemplo.com"></div>
+        <div class="form-group"><label class="form-label">Diagnóstico</label><input type="text" id="diagnostico" class="form-input" placeholder="Ej: TDL, TSH..."></div>
+        <div class="form-group"><label class="form-label">Notas Clínicas</label><textarea id="notas" class="form-textarea" placeholder="Información relevante..."></textarea></div>
+        <button class="btn" onclick="agregarPaciente()">➕ Agregar Paciente</button>
+        <div style="margin-top: 26px; border-top: 1.5px solid var(--border); padding-top: 22px;">
+            <div style="margin-bottom: 16px;">
+                <div class="form-label">🔍 Buscar Paciente</div>
+                <input type="text" id="buscar-paciente" class="form-input" placeholder="Escribe nombre..." onkeyup="filtrarPacientes()">
+            </div>
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="ver-archivados" onchange="filtrarPacientes()" style="cursor: pointer;">
+                <label for="ver-archivados" style="cursor: pointer; font-size: 0.9rem; color: var(--muted); font-weight: 500;">Ver dados de alta 📋</label>
+            </div>
+            <h3 style="color: var(--sky); margin-bottom: 14px; font-size: 0.98rem; font-weight: 600;">Lista</h3>
+            <div id="lista-pacientes"></div>
+        </div>
+    </div>
+
+    <!-- PLANIFICACIÓN -->
+    <div id="vista-planificacion" class="vista">
+        <div class="titulo">📊 Planificación Terapéutica</div>
+        <div id="contenido-planificacion"></div>
+    </div>
+
+    <!-- SESIÓN -->
+    <div id="vista-sesion" class="vista">
+        <div class="titulo">📝 Registro de Sesión</div>
+        <div id="contenido-sesion"></div>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div id="vista-historial" class="vista">
+        <div class="titulo">📅 Historial de Sesiones</div>
+        <div style="margin-bottom: 16px;" id="btn-descargar-container"></div>
+        <div id="contenido-historial"></div>
+    </div>
+
+    <!-- MI AGENDA -->
+    <div id="vista-agenda" class="vista" style="display: none;">
+        <div class="titulo">📅 Mi Agenda</div>
+        
+        <!-- Próximas Sesiones -->
+        <div style="background: linear-gradient(135deg, var(--sky-pale), var(--rose-pale)); padding: 18px; border-radius: 16px; margin-bottom: 20px; border: 1.5px solid var(--border);">
+            <h3 style="color: var(--sky); margin-bottom: 14px; font-weight: 600;">⏰ Próximas Sesiones</h3>
+            <div id="proximas-sesiones" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+        
+        <!-- Agregar Cita -->
+        <div style="background: var(--sky-pale); border: 1.5px solid var(--sky-light); border-radius: 14px; padding: 18px; margin-bottom: 20px;">
+            <h3 style="color: var(--sky); margin-bottom: 14px; font-weight: 600;">➕ Agregar Cita</h3>
+            <div class="form-group">
+                <label class="form-label">Paciente</label>
+                <select id="agenda-paciente" class="form-select">
+                    <option value="">-- Selecciona paciente --</option>
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" id="agenda-fecha" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Hora</label>
+                    <input type="time" id="agenda-hora" class="form-input">
+                </div>
+            </div>
+            <button class="btn" onclick="agregarCitaAgenda()" style="width: 100%; background: var(--gradient); color: white;">➕ Agregar</button>
+        </div>
+        
+        <!-- Calendario -->
+        <div style="background: white; border: 1.5px solid var(--border); border-radius: 14px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button onclick="mesAnterior()" style="background: var(--sky-pale); color: var(--sky); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600;">◀</button>
+                <h3 id="mes-anio" style="color: var(--sky); font-weight: 600; text-align: center; flex: 1;"></h3>
+                <button onclick="mesSiguiente()" style="background: var(--sky-pale); color: var(--sky); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600;">▶</button>
+            </div>
+            <div id="calendario-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;"></div>
+        </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="vista-config" class="vista">
+        <div class="titulo">⚙️ Configuración</div>
+        <div style="background: linear-gradient(135deg, var(--sky-pale), var(--rose-pale)); padding: 18px; border-radius: 16px; margin-bottom: 18px; border: 1.5px solid var(--border);">
+            <h3 style="color: var(--sky); margin-bottom: 14px; font-weight: 600;">👩‍⚕️ Datos del Profesional</h3>
+            <div class="form-group"><label class="form-label">Nombre Completo</label><input type="text" id="config-nombre" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Registro Profesional (RNP)</label><input type="text" id="config-rnp" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Especialidad</label><input type="text" id="config-titulo" class="form-input"></div>
+            <button class="btn" onclick="guardarConfiguracion()">💾 Guardar</button>
+        </div>
+        <div style="background: var(--sky-pale); border: 1.5px solid var(--sky-light); border-radius: 14px; padding: 16px; margin-bottom: 18px;">
+            <h3 style="color: var(--sky); margin-bottom: 10px; font-weight: 600;">🔒 Protección de Datos</h3>
+            <p style="font-size: 0.83rem; color: var(--text); line-height: 1.7; font-weight: 500;">Esta aplicación maneja información de pacientes menores. Todos los datos están protegidos según normativas de privacidad vigentes.</p>
+        </div>
+        <div style="margin-top: 18px;">
+            <a href="#" onclick="console.log('LOG: Ejecutando logout'); handleLogout(); return false;" style="display: block; background: #FEE2E2; color: #DC2626; border: none; padding: 14px; border-radius: 14px; font-family: Poppins; font-weight: 600; cursor: pointer; font-size: 0.93rem; text-align: center; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#FECACA'" onmouseout="this.style.background='#FEE2E2'">🚪 Cerrar Sesión</a>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR OBJETIVO -->
+<div id="modal-objetivo" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title">✏️ Editar Objetivo</h3><button class="modal-close" onclick="cerrarModalObjetivo()">×</button></div>
+        <div class="form-group"><label class="form-label">Objetivo</label><textarea id="edit-obj-txt" class="form-textarea" style="min-height: 80px;"></textarea></div>
+        <div class="form-group"><label class="form-label">Estado</label>
+            <select id="edit-obj-est" class="form-select">
+                <option value="notrabajado">⚪ No trabajado</option>
+                <option value="no">❌ No logrado</option>
+                <option value="apoyo">🔵 Con apoyo</option>
+                <option value="parcial">🟡 Parcial</option>
+                <option value="logrado">✅ Logrado</option>
+            </select>
+        </div>
+        <div class="form-group"><label class="form-label">Comentario</label><input type="text" id="edit-obj-comentario" class="form-input" placeholder="Agregar comentario..."></div>
+        <button class="btn" onclick="guardarObjetivoEditado()">💾 Guardar Cambios</button>
+    </div>
+</div>
+
+<!-- MODAL EDITAR PACIENTE -->
+<div id="modal-editar" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title">✏️ Editar Paciente</h3><button class="modal-close" onclick="cerrarModal()">×</button></div>
+        <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="edit-nombre" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Nacimiento</label><input type="date" id="edit-nacimiento" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="edit-telefono" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="edit-email" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Diagnóstico</label><input type="text" id="edit-diagnostico" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Notas</label><textarea id="edit-notas" class="form-textarea"></textarea></div>
+        <button class="btn" onclick="guardarEdicion()">💾 Guardar Cambios</button>
+    </div>
+</div>
+
+<!-- MODAL COMPARTIR SESIÓN -->
+<div id="modal-compartir" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title">💬 Compartir Sesión</h3><button class="modal-close" onclick="cerrarModalCompartir()">×</button></div>
+        <div class="preview-box" id="preview-texto"></div>
+        <div class="share-btn-grid">
+            <button class="share-btn" onclick="ejecutarCompartir('whatsapp')" id="btn-ws">💬 WhatsApp</button>
+            <button class="share-btn" onclick="ejecutarCompartir('email')" id="btn-email">📧 Email</button>
+            <button class="share-btn" onclick="ejecutarCompartir('copiar')" id="btn-copiar">📋 Copiar</button>
+            <button class="share-btn primary" onclick="ejecutarCompartir('pdf')">📥 PDF</button>
+        </div>
+        <button class="btn-secondary" onclick="cerrarModalCompartir()" style="width: 100%; margin-top: 14px;">Cerrar</button>
+    </div>
+</div>
+
+<script>
+// ===== SUPABASE AUTH =====
+const SUPABASE_URL = 'https://fepeupdjewhfsheyvydg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlcGV1cGRqZXdoZnNoZXl2eWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MTE2MDQsImV4cCI6MjA5NDI4NzYwNH0.zPX6HmY6neff0pcBWCeT1rlcPHKH63fxh_odRmvzeq4';
+
+let supabaseClient = null;
+let currentUser = null;
+
+function initSupabase() {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('✅ Supabase inicializado');
+}
+
+function toggleAuthForm() {
+    var loginForm = document.getElementById('login-form');
+    var registerForm = document.getElementById('register-form');
+    loginForm.style.display = loginForm.style.display === 'none' ? 'block' : 'none';
+    registerForm.style.display = registerForm.style.display === 'none' ? 'block' : 'none';
+}
+
+async function handleLogin() {
+    var email = document.getElementById('login-email').value.trim();
+    var password = document.getElementById('login-pass').value.trim();
+    var errorDiv = document.getElementById('login-error');
+    
+    if (!email || !password) {
+        errorDiv.textContent = '❌ Email y contraseña requeridos';
+        return;
+    }
+    
+    try {
+        var { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) {
+            console.error('Login error:', error);
+            errorDiv.textContent = '❌ ' + (error.message || 'Error al ingresar');
+            return;
+        }
+        
+        currentUser = data.user;
+        console.log('✅ Login exitoso:', currentUser.email);
+        showApp();
+    } catch (err) {
+        console.error('Exception:', err);
+        errorDiv.textContent = '❌ Error: ' + err.message;
+    }
+}
+
+async function handleRegister() {
+    var nombre = document.getElementById('register-nombre').value.trim();
+    var email = document.getElementById('register-email').value.trim();
+    var password = document.getElementById('register-pass').value.trim();
+    var rnp = document.getElementById('register-rnp').value.trim();
+    var errorDiv = document.getElementById('register-error');
+    
+    if (!nombre || !email || !password) {
+        errorDiv.textContent = '❌ Nombre, email y contraseña requeridos';
+        return;
+    }
+    
+    try {
+        var { data, error } = await supabaseClient.auth.signUp({
+            email: email,
+            password: password
+        });
+        
+        if (error) {
+            console.error('SignUp error:', error);
+            errorDiv.textContent = '❌ ' + (error.message || 'Error al registrar');
+            return;
+        }
+        
+        currentUser = data.user;
+        console.log('✅ Usuario creado:', data.user.id);
+        
+        // Guardar datos en tabla usuarios
+        var { error: insertError } = await supabaseClient.from('usuarios').insert({
+            id: currentUser.id,
+            nombre: nombre,
+            rnp: rnp || null
+        });
+        
+        if (insertError) {
+            console.error('Insert error:', insertError);
+            errorDiv.textContent = '⚠️ Cuenta creada pero error en perfil';
+            return;
+        }
+        
+        showApp();
+    } catch (err) {
+        console.error('Exception:', err);
+        errorDiv.textContent = '❌ ' + err.message;
+    }
+}
+
+function showAuth() {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-screen').style.display = 'none';
+}
+
+function showApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    cargarDatos().then(function() {
+        renderPacientes();
+        actualizarDashboard();
+    });
+}
+
+function actualizarDashboard() {
+    // Fecha de hoy
+    var hoy = new Date();
+    var opciones = { weekday: 'long', day: 'numeric', month: 'long' };
+    var fechaStr = hoy.toLocaleDateString('es-CL', opciones);
+    document.getElementById('dashboard-fecha').textContent = fechaStr;
+    
+    // Contador de pacientes
+    document.getElementById('dashboard-pacientes').textContent = pacientes.length;
+    
+    // Próxima sesión (si hay paciente seleccionado)
+    if (pacienteActual) {
+        var ses = sesiones.filter(function(s) { return s.pid === pacienteActual.id; });
+        if (ses.length > 0) {
+            var ultimaSes = ses[ses.length - 1];
+            document.getElementById('dashboard-proxima').textContent = pacienteActual.nombre;
+        } else {
+            document.getElementById('dashboard-proxima').textContent = 'Sin sesiones aún';
+        }
+    } else {
+        document.getElementById('dashboard-proxima').textContent = 'Selecciona paciente';
+    }
+}
+
+function handleLogout() {
+    console.log('🚪 Iniciando logout...');
+    if (supabaseClient) {
+        supabaseClient.auth.signOut().then(function() {
+            console.log('✅ Sesión cerrada');
+            currentUser = null;
+            pacientes = [];
+            sesiones = [];
+            config = {};
+            showAuth();
+        }).catch(function(err) {
+            console.error('Logout error:', err);
+            // Aún así mostrar login
+            currentUser = null;
+            showAuth();
+        });
+    } else {
+        showAuth();
+    }
+}
+
+async function checkAuth() {
+    try {
+        var { data } = await supabaseClient.auth.getSession();
+        if (data && data.session) {
+            currentUser = data.session.user;
+            console.log('✅ Sesión activa:', currentUser.email);
+            showApp();
+        } else {
+            console.log('❌ Sin sesión - mostrando login');
+            showAuth();
+        }
+    } catch (err) {
+        console.error('checkAuth error:', err);
+        showAuth();
+    }
+}
+
+// ===== APP ORIGINAL =====
+
+var sesiones = [];
+var pacienteActual = null;
+var editando = null;
+var editandoObjIdx = null;
+var compartiendo = null;
+var config = { nombre: '', rnp: '', titulo: '' };
+var db = null;
+
+function initDB() {
+    return new Promise(function(resolve) {
+        var req = indexedDB.open('FonoAprendeBD', 1);
+        req.onerror = function() { resolve(); };
+        req.onsuccess = function() { db = req.result; resolve(db); };
+        req.onupgradeneeded = function(e) {
+            var d = e.target.result;
+            if (!d.objectStoreNames.contains('app')) {
+                d.createObjectStore('app', { keyPath: 'id' });
+            }
+        };
+    });
+}
+
+function cargarDatos() {
+    return new Promise(function(resolve) {
+        initDB().then(function() {
+            if (!db) { resolve(); return; }
+            var tx = db.transaction(['app'], 'readonly');
+            var store = tx.objectStore('app');
+            var req = store.get('datos');
+            req.onsuccess = function() {
+                if (req.result) {
+                    var d = req.result;
+                    pacientes = d.pacientes || [];
+                    sesiones = d.sesiones || [];
+                    citas = d.citas || [];
+                    config = d.config || { nombre: '', rnp: '', titulo: '' };
+                    if (d.pacienteActual) {
+                        pacienteActual = pacientes.find(function(p) { return p.id === d.pacienteActual; }) || null;
+                    }
+                } else {
+                    agregarPacienteEjemplo();
+                }
+                actualizarSaludo();
+                resolve();
+            };
+            req.onerror = function() { resolve(); };
+        });
+    });
+}
+
+function agregarPacienteEjemplo() {
+    var hoy = new Date();
+    var hace2anos = new Date(hoy.getFullYear() - 2, hoy.getMonth(), hoy.getDate());
+    var nac = hace2anos.toISOString().split('T')[0];
+    
+    pacientes.push({
+        id: Date.now(),
+        nombre: 'Juan Pérez',
+        nac: nac,
+        tel: '+56912345678',
+        email: 'apoderado@ejemplo.com',
+        diag: 'TDL',
+        notas: 'Paciente en seguimiento',
+        archivo: false,
+        objs: [
+            { id: Date.now() + 1, txt: 'Aumentar vocabulario en categoría animales', est: 'apoyo', comentario: 'Trabajar 3 veces por semana' },
+            { id: Date.now() + 2, txt: 'Mejorar inteligibilidad del habla', est: 'parcial', comentario: 'Avanzando bien' },
+            { id: Date.now() + 3, txt: 'Estructuración de frases de 3-4 palabras', est: 'logrado', comentario: 'Logrado hace 2 sesiones' }
+        ]
+    });
+    pacienteActual = pacientes[0];
+    guardarDatos();
+}
+
+function guardarDatos() {
+    if (!db) return;
+    var tx = db.transaction(['app'], 'readwrite');
+    var store = tx.objectStore('app');
+    store.put({
+        id: 'datos',
+        pacientes: pacientes,
+        sesiones: sesiones,
+        citas: citas,
+        config: config,
+        pacienteActual: pacienteActual ? pacienteActual.id : null
+    });
+}
+
+function actualizarSaludo() {
+    var saludo = document.getElementById('saludo');
+    if (config.nombre) {
+        saludo.textContent = '¡Hola de nuevo! 🍃 ' + config.nombre;
+    } else {
+        saludo.textContent = '¡Hola de nuevo! 🍃';
+    }
+}
+
+function calcularEdad(f) {
+    if (!f) return null;
+    var hoy = new Date();
+    var nac = new Date(f);
+    var a = hoy.getFullYear() - nac.getFullYear();
+    var m = hoy.getMonth() - nac.getMonth();
+    if (m < 0) { a--; m += 12; }
+    if (hoy.getDate() < nac.getDate() && m > 0) { m--; }
+    if (a === 0 && m === 0) return null;
+    if (a === 0) return m + ' mes' + (m !== 1 ? 'es' : '');
+    if (m === 0) return a + ' año' + (a !== 1 ? 's' : '');
+    return a + ' a ' + m + ' m';
+}
+
+function calcularEdadDisplay() {
+    var f = document.getElementById('nacimiento').value;
+    var edad = calcularEdad(f);
+    var div = document.getElementById('edad-display');
+    if (edad) {
+        div.innerHTML = '<div class="edad-display">👶 Edad: ' + edad + '</div>';
+    } else {
+        div.innerHTML = '';
+    }
+}
+
+function cambiarVista(v) {
+    document.querySelectorAll('.vista').forEach(function(el) { el.classList.remove('active'); });
+    document.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('active'); });
+    document.getElementById('vista-' + v).classList.add('active');
+    var tabs = document.querySelectorAll('.tab');
+    var idx = ['pacientes', 'planificacion', 'sesion', 'historial', 'agenda', 'config'].indexOf(v);
+    if (idx >= 0) tabs[idx].classList.add('active');
+    if (v === 'planificacion') mostrarPlanificacion();
+    if (v === 'sesion') mostrarSesion();
+    if (v === 'historial') mostrarHistorial();
+    if (v === 'agenda') mostrarAgenda();
+    if (v === 'config') mostrarConfig();
+}
+
+function agregarPaciente() {
+    var nom = document.getElementById('nombre').value.trim();
+    if (!nom) { alert('Ingresa el nombre'); return; }
+    var p = {
+        id: Date.now(),
+        nombre: nom,
+        nac: document.getElementById('nacimiento').value,
+        tel: document.getElementById('telefono').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        diag: document.getElementById('diagnostico').value.trim(),
+        notas: document.getElementById('notas').value.trim(),
+        objs: [],
+        archivo: false
+    };
+    pacientes.push(p);
+    guardarDatos();
+    ['nombre', 'nacimiento', 'telefono', 'email', 'diagnostico', 'notas'].forEach(function(id) {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('edad-display').innerHTML = '';
+    renderPacientes();
+    seleccionarPaciente(p.id);
+    alert('✅ Paciente agregado');
+}
+
+function renderPacientes() {
+    var c = document.getElementById('lista-pacientes');
+    if (pacientes.length === 0) {
+        c.innerHTML = '<div style="text-align: center; color: var(--faint); padding: 30px;">No hay pacientes aún</div>';
+        return;
+    }
+    var mostrarArchivados = document.getElementById('ver-archivados') && document.getElementById('ver-archivados').checked;
+    var pacientesMostrar = pacientes.filter(function(p) {
+        if (mostrarArchivados) return true;
+        return !p.archivo;
+    });
+    
+    if (pacientesMostrar.length === 0) {
+        c.innerHTML = '<div style="text-align: center; color: var(--faint); padding: 30px;">No hay pacientes activos</div>';
+        return;
+    }
+    var h = '';
+    pacientesMostrar.forEach(function(p) {
+        var sel = pacienteActual && pacienteActual.id === p.id ? 'style="background: var(--sky-pale); border-color: var(--sky-light);"' : '';
+        var edad = p.nac ? ('👶 ' + calcularEdad(p.nac)) : '';
+        var badge = p.archivo ? '<div style="display: inline-block; background: #FEE2E2; color: #DC2626; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; margin-top: 4px;">DADO DE ALTA</div>' : '';
+        h += '<div class="card" ' + sel + ' onclick="seleccionarPaciente(' + p.id + ')">'
+            + '<div style="display: flex; justify-content: space-between; align-items: start;">'
+            + '<div style="flex: 1;">'
+            + '<div class="card-header">' + p.nombre + '</div>'
+            + (edad ? '<div class="card-info">' + edad + '</div>' : '')
+            + (p.diag ? '<div class="card-info">📋 ' + p.diag + '</div>' : '')
+            + badge
+            + '</div>'
+            + '<div style="display: flex; gap: 6px; flex-shrink: 0;">'
+            + '<button class="btn-secondary btn-small" onclick="editarPaciente(' + p.id + ', event)" title="Editar">✏️</button>'
+            + '<button class="btn-secondary btn-small" onclick="archivarPaciente(' + p.id + ', event)" title="' + (p.archivo ? 'Reactivar' : 'Dar de alta') + '">📋</button>'
+            + '<button class="btn-secondary btn-small" onclick="delPaciente(' + p.id + ', event)" style="background: #FEE2E2; color: #DC2626; border-color: #FECACA;" title="Eliminar">🗑️</button>'
+            + '</div></div></div>';
+    });
+    c.innerHTML = h;
+}
+
+function filtrarPacientes() {
+    var busqueda = document.getElementById('buscar-paciente').value.toLowerCase().trim();
+    var c = document.getElementById('lista-pacientes');
+    var mostrarArchivados = document.getElementById('ver-archivados') && document.getElementById('ver-archivados').checked;
+    
+    if (busqueda === '') {
+        renderPacientes();
+        return;
+    }
+    
+    var pacientesFilterados = pacientes.filter(function(p) {
+        var coincideBusqueda = p.nombre.toLowerCase().includes(busqueda);
+        if (mostrarArchivados) return coincideBusqueda;
+        return coincideBusqueda && !p.archivo;
+    });
+    
+    if (pacientesFilterados.length === 0) {
+        c.innerHTML = '<div style="text-align: center; color: var(--faint); padding: 30px;">No se encontraron pacientes</div>';
+        return;
+    }
+    
+    var h = '';
+    pacientesFilterados.forEach(function(p) {
+        var sel = pacienteActual && pacienteActual.id === p.id ? 'style="background: var(--sky-pale); border-color: var(--sky-light);"' : '';
+        var edad = p.nac ? ('👶 ' + calcularEdad(p.nac)) : '';
+        var badge = p.archivo ? '<div style="display: inline-block; background: #FEE2E2; color: #DC2626; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; margin-top: 4px;">DADO DE ALTA</div>' : '';
+        h += '<div class="card" ' + sel + ' onclick="seleccionarPaciente(' + p.id + ')">'
+            + '<div style="display: flex; justify-content: space-between; align-items: start;">'
+            + '<div style="flex: 1;">'
+            + '<div class="card-header">' + p.nombre + '</div>'
+            + (edad ? '<div class="card-info">' + edad + '</div>' : '')
+            + (p.diag ? '<div class="card-info">📋 ' + p.diag + '</div>' : '')
+            + badge
+            + '</div>'
+            + '<div style="display: flex; gap: 6px; flex-shrink: 0;">'
+            + '<button class="btn-secondary btn-small" onclick="editarPaciente(' + p.id + ', event)" title="Editar">✏️</button>'
+            + '<button class="btn-secondary btn-small" onclick="archivarPaciente(' + p.id + ', event)" title="' + (p.archivo ? 'Reactivar' : 'Dar de alta') + '">📋</button>'
+            + '<button class="btn-secondary btn-small" onclick="delPaciente(' + p.id + ', event)" style="background: #FEE2E2; color: #DC2626; border-color: #FECACA;" title="Eliminar">🗑️</button>'
+            + '</div></div></div>';
+    });
+    c.innerHTML = h;
+}
+
+function seleccionarPaciente(id) {
+    pacienteActual = pacientes.find(function(p) { return p.id === id; }) || null;
+    guardarDatos();
+    renderPacientes();
+    actualizarDashboard();
+}
+
+function editarPaciente(id, e) {
+    e.stopPropagation();
+    var p = pacientes.find(function(x) { return x.id === id; });
+    if (!p) return;
+    editando = id;
+    document.getElementById('edit-nombre').value = p.nombre;
+    document.getElementById('edit-nacimiento').value = p.nac || '';
+    document.getElementById('edit-telefono').value = p.tel || '';
+    document.getElementById('edit-email').value = p.email || '';
+    document.getElementById('edit-diagnostico').value = p.diag || '';
+    document.getElementById('edit-notas').value = p.notas || '';
+    document.getElementById('modal-editar').classList.add('active');
+}
+
+function cerrarModal() {
+    document.getElementById('modal-editar').classList.remove('active');
+    editando = null;
+}
+
+function guardarEdicion() {
+    var p = pacientes.find(function(x) { return x.id === editando; });
+    if (!p) return;
+    p.nombre = document.getElementById('edit-nombre').value.trim();
+    p.nac = document.getElementById('edit-nacimiento').value;
+    p.tel = document.getElementById('edit-telefono').value.trim();
+    p.email = document.getElementById('edit-email').value.trim();
+    p.diag = document.getElementById('edit-diagnostico').value.trim();
+    p.notas = document.getElementById('edit-notas').value.trim();
+    guardarDatos();
+    renderPacientes();
+    cerrarModal();
+    alert('✅ Paciente actualizado');
+}
+
+function archivarPaciente(id, e) {
+    e.stopPropagation();
+    var p = pacientes.find(function(x) { return x.id === id; });
+    if (!p) return;
+    
+    if (p.archivo) {
+        if (!confirm('¿Reactivar a ' + p.nombre + '?')) return;
+        p.archivo = false;
+    } else {
+        if (!confirm('¿Dar de alta a ' + p.nombre + '?')) return;
+        p.archivo = true;
+    }
+    
+    guardarDatos();
+    renderPacientes();
+    alert('✅ ' + p.nombre + ' ' + (p.archivo ? 'dado de alta' : 'reactivado'));
+}
+
+function delPaciente(id, e) {
+    e.stopPropagation();
+    var p = pacientes.find(function(x) { return x.id === id; });
+    if (!p) return;
+    if (!confirm('¿Eliminar a ' + p.nombre + '?')) return;
+    pacientes = pacientes.filter(function(x) { return x.id !== id; });
+    sesiones = sesiones.filter(function(s) { return s.pid !== id; });
+    if (pacienteActual && pacienteActual.id === id) pacienteActual = null;
+    guardarDatos();
+    renderPacientes();
+    alert('✅ Paciente eliminado');
+}
+
+function mostrarPlanificacion() {
+    var c = document.getElementById('contenido-planificacion');
+    if (!pacienteActual) {
+        c.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p>Selecciona un paciente</p></div>';
+        return;
+    }
+    if (!pacienteActual.objs) pacienteActual.objs = [];
+    
+    var total = pacienteActual.objs.length;
+    var logrados = pacienteActual.objs.filter(function(o) { return o.est === 'logrado'; }).length;
+    var pct = total > 0 ? Math.round((logrados / total) * 100) : 0;
+    
+    // Header compacto
+    var h = '<div style="background: linear-gradient(135deg, var(--sky-pale), var(--rose-pale)); padding: 16px; border-radius: 14px; margin-bottom: 16px; border: 1.5px solid var(--border);">'
+        + '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">'
+        + '<h3 style="color: var(--sky); margin: 0; font-weight: 700; font-size: 1rem;">🎯 ' + pacienteActual.nombre + '</h3>'
+        + '<span style="background: white; color: var(--sky); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">' + total + ' obj</span>'
+        + '</div>';
+    
+    if (total > 0) {
+        h += '<div style="background: white; height: 6px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(141,212,232,0.3);">'
+            + '<div style="background: linear-gradient(90deg, #10b981, #8DD4E8); height: 100%; width: ' + pct + '%;"></div>'
+            + '</div>'
+            + '<div style="font-size: 0.75rem; color: var(--muted); margin-top: 6px; text-align: right; font-weight: 600;">' + logrados + '/' + total + ' ✅</div>';
+    }
+    h += '</div>';
+    
+    // Agregar objetivos
+    h += '<div style="background: var(--sky-pale); border: 1.5px dashed var(--sky-light); border-radius: 12px; padding: 14px; margin-bottom: 16px;">'
+        + '<label class="form-label" style="margin-bottom: 8px; font-size: 0.85rem;">🎯 Agregar (uno por línea)</label>'
+        + '<textarea id="objs-multi" class="form-textarea" placeholder="Obj 1&#10;Obj 2&#10;..." style="min-height: 60px; font-size: 0.85rem;"></textarea>'
+        + '<button class="btn" onclick="agregarObjetivosMultiples()" style="width: 100%; background: var(--gradient); color: white; border: none; margin-top: 10px; font-weight: 600; padding: 10px; border-radius: 10px; font-size: 0.85rem;">➕ Agregar</button>'
+        + '</div>';
+    
+    if (total === 0) {
+        h += '<div class="empty-state" style="padding: 30px;"><div class="empty-icon" style="font-size: 2.5rem;">🌱</div><p style="font-size: 0.95rem;">Agrega los primeros objetivos</p></div>';
+    } else {
+        h += '<button class="btn-secondary" onclick="descargarPlanificacion()" style="width: 100%; background: var(--gradient); color: white; border: none; margin-bottom: 14px; font-weight: 600; padding: 12px; border-radius: 10px; font-size: 0.9rem;">📥 Descargar</button>';
+        
+        // Objetivos compactos
+        h += '<div style="display: flex; flex-direction: column; gap: 8px;">';
+        pacienteActual.objs.forEach(function(o, i) {
+            var est = o.est || 'notrabajado';
+            var estados = {
+                'logrado': { border: '#7FBD9D', ico: '✅', label: 'Logrado', bg: '#E8F5F0' },
+                'parcial': { border: '#E8B76E', ico: '🟡', label: 'Parcial', bg: '#FEF5E8' },
+                'apoyo': { border: '#8FB3D9', ico: '🔵', label: 'C/apoyo', bg: '#F0F5FF' },
+                'no': { border: '#E8A0A0', ico: '❌', label: 'No logr', bg: '#FEEAEA' },
+                'notrabajado': { border: '#C9CED4', ico: '⚪', label: 'Sin trab', bg: '#FAFBFC' },
+                'enproceso': { border: '#E8B76E', ico: '⏳', label: 'En proc', bg: '#FFFAF0' }
+            };
+            var config = estados[est] || estados['notrabajado'];
+            
+            h += '<div style="background: ' + config.bg + '; border-left: 4px solid ' + config.border + '; border-radius: 8px; padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start;">'
+                + '<div style="color: ' + config.border + '; font-weight: 700; font-size: 0.85rem; min-width: 20px; flex-shrink: 0;">' + (i + 1) + '</div>'
+                + '<div style="flex: 1; min-width: 0;">'
+                + '<div style="color: var(--text); font-size: 0.85rem; line-height: 1.3; word-break: break-word; margin-bottom: 2px;">' + o.txt + '</div>'
+                + (o.comentario ? '<div style="font-size: 0.75rem; color: var(--muted); font-style: italic; margin-top: 4px;">💡 ' + o.comentario + '</div>' : '')
+                + '</div>'
+                + '<div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">'
+                + '<span style="background: white; color: ' + config.border + '; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; white-space: nowrap;">' + config.ico + ' ' + config.label + '</span>'
+                + '<button class="btn-secondary btn-small" onclick="abrirEditarObjetivo(' + i + ')" title="Editar" style="padding: 4px 6px; font-size: 0.7rem;">✏️</button>'
+                + '</div>'
+                + '</div>';
+        });
+        h += '</div>';
+    }
+    c.innerHTML = h;
+}
+
+function agregarObjetivosMultiples() {
+    if (!pacienteActual) return;
+    var txt = document.getElementById('objs-multi').value.trim();
+    if (!txt) return;
+    var lineas = txt.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+    if (lineas.length === 0) return;
+    if (!pacienteActual.objs) pacienteActual.objs = [];
+    lineas.forEach(function(linea) {
+        pacienteActual.objs.push({ id: Date.now() + Math.random(), txt: linea, est: 'no', comentario: '' });
+    });
+    document.getElementById('objs-multi').value = '';
+    guardarDatos();
+    mostrarPlanificacion();
+    alert('✅ ' + lineas.length + ' objetivo(s) agregado(s)');
+}
+
+function abrirEditarObjetivo(idx) {
+    editandoObjIdx = idx;
+    var o = pacienteActual.objs[idx];
+    if (!o) return;
+    document.getElementById('edit-obj-txt').value = o.txt;
+    document.getElementById('edit-obj-est').value = o.est;
+    document.getElementById('edit-obj-comentario').value = o.comentario || '';
+    document.getElementById('modal-objetivo').classList.add('active');
+}
+
+function cerrarModalObjetivo() {
+    document.getElementById('modal-objetivo').classList.remove('active');
+    editandoObjIdx = null;
+}
+
+function guardarObjetivoEditado() {
+    if (editandoObjIdx === null) return;
+    var o = pacienteActual.objs[editandoObjIdx];
+    if (!o) return;
+    o.txt = document.getElementById('edit-obj-txt').value.trim();
+    o.est = document.getElementById('edit-obj-est').value;
+    o.comentario = document.getElementById('edit-obj-comentario').value.trim();
+    guardarDatos();
+    mostrarPlanificacion();
+    cerrarModalObjetivo();
+    alert('✅ Objetivo actualizado');
+}
+
+function cambiarEstadoObj(id, est) {
+    var o = pacienteActual.objs.find(function(x) { return x.id === id; });
+    if (o) { o.est = est; guardarDatos(); mostrarPlanificacion(); }
+}
+
+function cambiarComentarioObj(id, txt) {
+    var o = pacienteActual.objs.find(function(x) { return x.id === id; });
+    if (o) { o.comentario = txt; guardarDatos(); }
+}
+
+function delObj(id) {
+    if (!confirm('¿Eliminar objetivo?')) return;
+    pacienteActual.objs = pacienteActual.objs.filter(function(o) { return o.id !== id; });
+    guardarDatos();
+    mostrarPlanificacion();
+}
+
+function descargarPlanificacion() {
+    if (!pacienteActual) return;
+    var hoy = new Date().toLocaleDateString('es-CL');
+    var h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Planificación</title>'
+        + '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">'
+        + '<style>body{font-family:Poppins;padding:28px;background:#f8f9fa;color:#4A5568;} h1{color:#8DD4E8;font-weight:600;} .obj{margin:12px 0; padding:13px; background:white; border-left:4px solid #8DD4E8; border-radius:10px;}</style>'
+        + '</head><body>'
+        + '<h1>📊 Planificación Terapéutica</h1>'
+        + '<p><strong>Paciente:</strong> ' + pacienteActual.nombre + '</p>'
+        + '<p><strong>Fecha:</strong> ' + hoy + '</p>'
+        + (config.nombre ? '<p><strong>Profesional:</strong> ' + config.nombre + (config.rnp ? ' · ' + config.rnp : '') + '</p>' : '')
+        + '<h2 style="color: #8DD4E8; margin-top: 22px;">Objetivos</h2>';
+    
+    pacienteActual.objs.forEach(function(o, i) {
+        var icos = { 'logrado': '✅', 'parcial': '🟡', 'apoyo': '🔵', 'no': '❌' };
+        h += '<div class="obj"><strong>' + (i + 1) + '. ' + o.txt + '</strong><br><small>' + icos[o.est] + ' ' + o.est.toUpperCase();
+        if (o.comentario) h += ' - ' + o.comentario;
+        h += '</small></div>';
+    });
+    
+    h += '</body></html>';
+    var blob = new Blob([h], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'planificacion_' + pacienteActual.nombre + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+}
+
+function mostrarSesion() {
+    var c = document.getElementById('contenido-sesion');
+    if (!pacienteActual) {
+        c.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><p>Selecciona un paciente</p></div>';
+        return;
+    }
+    
+    var hoy = new Date().toISOString().split('T')[0];
+    var h = '<div class="form-group"><label class="form-label">📅 Fecha</label><input type="date" id="fses" class="form-input" value="' + hoy + '"></div>'
+        + '<div class="form-group"><label class="form-label">🎯 Objetivos Trabajados</label><div style="margin-bottom: 12px;">';
+    
+    if (pacienteActual.objs) {
+        pacienteActual.objs.filter(function(o) { return o.est !== 'logrado'; }).forEach(function(o) {
+            h += '<button onclick="addObjSes(\'' + o.id + '\')" style="width: 100%; text-align: left; padding: 10px 12px; border: 1.5px solid var(--border); background: white; border-radius: 10px; margin-bottom: 7px; cursor: pointer; font-family: Poppins; font-size: 0.84rem; color: var(--text); font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background=\'var(--sky-pale)\';" onmouseout="this.style.background=\'white\';">+ ' + o.txt + '</button>';
+        });
+    }
+    
+    h += '<input type="text" id="objtemp" class="form-input" placeholder="Otro objetivo..." style="margin-top: 8px;">'
+        + '<button class="btn" onclick="addObjSes()" style="margin-top: 8px;">➕ Agregar</button>'
+        + '</div></div>'
+        + '<div id="objs-ses"></div>'
+        + '<div class="form-group"><label class="form-label">✨ Logros y Avances</label><textarea id="logros" class="form-textarea" placeholder="¿Qué logró el paciente?"></textarea></div>'
+        + '<div class="form-group"><label class="form-label">💬 Observaciones</label><textarea id="obs" class="form-textarea" placeholder="Conducta, respuesta al tratamiento..."></textarea></div>'
+        + '<div class="form-group"><label class="form-label">⚠️ Barreras</label><textarea id="barreras" class="form-textarea" placeholder="Factores limitantes..."></textarea></div>'
+        + '<div class="form-group"><label class="form-label">🏠 Tareas para Casa</label><textarea id="tareas" class="form-textarea" placeholder="Ejercicios de refuerzo..."></textarea></div>'
+        + '<button class="btn" onclick="guardarSesion()">💾 Guardar Sesión</button>';
+    c.innerHTML = h;
+}
+
+var objsSesion = [];
+
+function addObjSes(id) {
+    var txt = id ? (pacienteActual.objs.find(function(o) { return o.id == id; }) || {}).txt : (document.getElementById('objtemp').value.trim());
+    if (!txt) return;
+    objsSesion.push({ txt: txt, est: 'logrado' });
+    if (!id) document.getElementById('objtemp').value = '';
+    renderObjSes();
+}
+
+function renderObjSes() {
+    var c = document.getElementById('objs-ses');
+    if (objsSesion.length === 0) { c.innerHTML = ''; return; }
+    var h = '';
+    objsSesion.forEach(function(o, i) {
+        h += '<div style="background: var(--sky-pale); border-left: 4px solid var(--sky); padding: 11px 13px; border-radius: 10px; margin-bottom: 9px; display: flex; gap: 8px; align-items: flex-start;">'
+            + '<div style="flex: 1; font-size: 0.86rem; color: var(--text); font-weight: 500;">' + o.txt + '</div>'
+            + '<select onchange="objsSesion[' + i + '].est = this.value" style="font-size: 0.76rem; padding: 5px 8px; border-radius: 6px; cursor: pointer; min-width: 110px; flex-shrink: 0;">'
+            + '<option value="logrado" selected>✅ Logrado</option>'
+            + '<option value="parcial">🟡 Parcial</option>'
+            + '<option value="apoyo">🔵 Apoyo</option>'
+            + '<option value="no">❌ No</option>'
+            + '</select>'
+            + '<button onclick="objsSesion.splice(' + i + ', 1); renderObjSes()" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 1.1rem; padding: 0; flex-shrink: 0;" title="Eliminar">✕</button>'
+            + '</div>';
+    });
+    c.innerHTML = h;
+}
+
+function guardarSesion() {
+    if (!pacienteActual) return;
+    var f = document.getElementById('fses').value;
+    if (!f) { alert('Selecciona fecha'); return; }
+    
+    var icos = { 'logrado': '✅', 'parcial': '🟡', 'apoyo': '🔵', 'no': '❌' };
+    var textos = { 'logrado': 'Logrado', 'parcial': 'Logro Parcial', 'apoyo': 'Con Apoyo', 'no': 'No Logrado' };
+    var otxt = objsSesion.map(function(o) { return icos[o.est] + ' ' + textos[o.est] + ': ' + o.txt; }).join('\n');
+    
+    sesiones.push({
+        id: Date.now(),
+        pid: pacienteActual.id,
+        f: f,
+        objs: otxt,
+        logros: document.getElementById('logros').value.trim(),
+        obs: document.getElementById('obs').value.trim(),
+        barreras: document.getElementById('barreras').value.trim(),
+        tareas: document.getElementById('tareas').value.trim()
+    });
+    
+    guardarDatos();
+    objsSesion = [];
+    alert('✅ Sesión guardada');
+    cambiarVista('historial');
+}
+
+function mostrarHistorial() {
+    var c = document.getElementById('contenido-historial');
+    var btn = document.getElementById('btn-descargar-container');
+    
+    if (!pacienteActual) {
+        c.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>Selecciona un paciente</p></div>';
+        btn.innerHTML = '';
+        return;
+    }
+    
+    var ses = sesiones.filter(function(s) { return s.pid === pacienteActual.id; }).sort(function(a, b) { return b.id - a.id; });
+    if (ses.length === 0) {
+        c.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Sin sesiones registradas</p></div>';
+        btn.innerHTML = '';
+        return;
+    }
+    
+    btn.innerHTML = '<button onclick="descargarHistorialPDF()" style="background: var(--gradient); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-family: Poppins; font-weight: 600; cursor: pointer; font-size: 0.9rem; width: 100%;">📥 Descargar Historial Completo (PDF)</button>';
+    
+    var h = '';
+    ses.forEach(function(s, i) {
+        var n = ses.length - i;
+        var parts = s.f.split('-');
+        var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        var fstr = d.toLocaleDateString('es-CL', { weekday: 'long', month: 'long', day: 'numeric' });
+        
+        h += '<div class="card" style="padding: 0; overflow: hidden;">'
+            + '<div style="background: linear-gradient(135deg, var(--sky-pale), var(--rose-pale)); padding: 14px; border-bottom: 1.5px solid var(--border);"><strong style="color: var(--text); font-weight: 600;">Sesión #' + n + ' · ' + fstr + '</strong></div>'
+            + '<div style="padding: 16px;">'
+            + (s.objs ? '<div style="margin-bottom: 12px;"><strong style="color: var(--sky); font-size: 0.87rem; font-weight: 600;">🎯 Objetivos:</strong><div style="font-size: 0.84rem; color: var(--text); white-space: pre-wrap; margin-top: 6px; background: #FCFDFE; padding: 10px; border-radius: 9px; border-left: 3px solid var(--sky); font-weight: 500;">' + s.objs + '</div></div>' : '')
+            + (s.logros ? '<div style="margin-bottom: 12px;"><strong style="color: var(--sky); font-size: 0.87rem; font-weight: 600;">✨ Logros:</strong><div style="font-size: 0.84rem; color: var(--text); white-space: pre-wrap; margin-top: 6px; background: #FCFDFE; padding: 10px; border-radius: 9px; border-left: 3px solid #10b981; font-weight: 500;">' + s.logros + '</div></div>' : '')
+            + (s.obs ? '<div style="margin-bottom: 12px;"><strong style="color: var(--sky); font-size: 0.87rem; font-weight: 600;">💬 Observaciones:</strong><div style="font-size: 0.84rem; color: var(--text); white-space: pre-wrap; margin-top: 6px; background: #FCFDFE; padding: 10px; border-radius: 9px; border-left: 3px solid var(--sky); font-weight: 500;">' + s.obs + '</div></div>' : '')
+            + (s.barreras ? '<div style="margin-bottom: 12px;"><strong style="color: var(--sky); font-size: 0.87rem; font-weight: 600;">⚠️ Barreras:</strong><div style="font-size: 0.84rem; color: var(--text); white-space: pre-wrap; margin-top: 6px; background: #FCFDFE; padding: 10px; border-radius: 9px; border-left: 3px solid #f59e0b; font-weight: 500;">' + s.barreras + '</div></div>' : '')
+            + (s.tareas ? '<div style="margin-bottom: 12px;"><strong style="color: var(--sky); font-size: 0.87rem; font-weight: 600;">🏠 Tareas:</strong><div style="font-size: 0.84rem; color: var(--text); white-space: pre-wrap; margin-top: 6px; background: #FCFDFE; padding: 10px; border-radius: 9px; border-left: 3px solid var(--lilac); font-weight: 500;">' + s.tareas + '</div></div>' : '')
+            + '<div class="btn-group">'
+            + '<button onclick="abrirCompartir(' + s.id + ')" style="background: var(--gradient); color: white; border: none; padding: 11px; border-radius: 11px; font-family: Poppins; font-weight: 600; cursor: pointer; font-size: 0.84rem;">💬 Compartir</button>'
+            + '<button onclick="descargarSesionPDF(' + s.id + ')" style="background: var(--sky-pale); color: var(--sky); border: none; padding: 11px; border-radius: 11px; font-family: Poppins; font-weight: 600; cursor: pointer; font-size: 0.84rem;">📥 PDF</button>'
+            + '</div>'
+            + '</div></div>';
+    });
+    c.innerHTML = h;
+}
+
+function abrirCompartir(id) {
+    compartiendo = id;
+    var s = sesiones.find(function(x) { return x.id === id; });
+    if (!s || !pacienteActual) return;
+    
+    var hoy = new Date().toLocaleDateString('es-CL');
+    var preview = 'INFORME DE SESIÓN\n═════════════════════════════\n\n'
+        + '📅 Fecha: ' + hoy + '\n'
+        + '👤 Paciente: ' + pacienteActual.nombre + '\n';
+    if (config.nombre) preview += '👩‍⚕️ Profesional: ' + config.nombre + (config.rnp ? ' · ' + config.rnp : '') + '\n';
+    preview += '\n';
+    
+    if (s.objs && s.objs.trim()) preview += '🎯 OBJETIVOS TRABAJADOS:\n' + s.objs + '\n\n';
+    if (s.logros && s.logros.trim()) preview += '✨ LOGROS Y AVANCES:\n' + s.logros + '\n\n';
+    if (s.obs && s.obs.trim()) preview += '💬 OBSERVACIONES:\n' + s.obs + '\n\n';
+    if (s.barreras && s.barreras.trim()) preview += '⚠️ BARRERAS:\n' + s.barreras + '\n\n';
+    if (s.tareas && s.tareas.trim()) preview += '🏠 TAREAS PARA CASA:\n' + s.tareas + '\n\n';
+    
+    preview += '═════════════════════════════';
+    
+    document.getElementById('preview-texto').textContent = preview;
+    
+    var tel = pacienteActual.tel ? pacienteActual.tel.replace(/[^0-9]/g, '') : '';
+    var email = pacienteActual.email || '';
+    
+    document.getElementById('btn-ws').style.display = tel ? 'block' : 'none';
+    document.getElementById('btn-email').style.display = email ? 'block' : 'none';
+    
+    document.getElementById('modal-compartir').classList.add('active');
+}
+
+function cerrarModalCompartir() {
+    document.getElementById('modal-compartir').classList.remove('active');
+    compartiendo = null;
+}
+
+function ejecutarCompartir(tipo) {
+    var s = sesiones.find(function(x) { return x.id === compartiendo; });
+    if (!s || !pacienteActual) return;
+    
+    var hoy = new Date().toLocaleDateString('es-CL');
+    var msg = 'INFORME DE SESIÓN\n═════════════════════════════\n\n'
+        + '📅 Fecha: ' + hoy + '\n'
+        + '👤 Paciente: ' + pacienteActual.nombre + '\n';
+    if (config.nombre) msg += '👩‍⚕️ Profesional: ' + config.nombre + (config.rnp ? ' · ' + config.rnp : '') + '\n';
+    msg += '\n';
+    
+    if (s.objs && s.objs.trim()) msg += '🎯 OBJETIVOS TRABAJADOS:\n' + s.objs + '\n\n';
+    if (s.logros && s.logros.trim()) msg += '✨ LOGROS Y AVANCES:\n' + s.logros + '\n\n';
+    if (s.obs && s.obs.trim()) msg += '💬 OBSERVACIONES:\n' + s.obs + '\n\n';
+    if (s.barreras && s.barreras.trim()) msg += '⚠️ BARRERAS:\n' + s.barreras + '\n\n';
+    if (s.tareas && s.tareas.trim()) msg += '🏠 TAREAS PARA CASA:\n' + s.tareas + '\n\n';
+    
+    msg += '═════════════════════════════';
+    
+    if (tipo === 'whatsapp') {
+        var tel = pacienteActual.tel.replace(/[^0-9]/g, '');
+        if (tel) window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(msg), '_blank');
+    } else if (tipo === 'email') {
+        if (pacienteActual.email) {
+            var asunto = encodeURIComponent('Informe Sesión - ' + pacienteActual.nombre);
+            var body = encodeURIComponent(msg);
+            window.open('https://mail.google.com/mail/?view=cm&to=' + pacienteActual.email + '&su=' + asunto + '&body=' + body, '_blank');
+        }
+    } else if (tipo === 'copiar') {
+        navigator.clipboard.writeText(msg).then(function() {
+            alert('✅ Texto copiado');
+            cerrarModalCompartir();
+        }).catch(function() {
+            var ta = document.createElement('textarea');
+            ta.value = msg;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            alert('✅ Texto copiado');
+            cerrarModalCompartir();
+        });
+    } else if (tipo === 'pdf') {
+        descargarSesionPDF(compartiendo);
+        cerrarModalCompartir();
+    }
+}
+
+function descargarHistorialPDF() {
+    if (!pacienteActual) return;
+    
+    var ses = sesiones.filter(function(s) { return s.pid === pacienteActual.id; }).sort(function(a, b) { return a.id - b.id; });
+    if (ses.length === 0) {
+        alert('Sin sesiones para descargar');
+        return;
+    }
+    
+    var hoy = new Date().toLocaleDateString('es-CL');
+    var edad = pacienteActual.nac ? calcularEdad(pacienteActual.nac) : 'No especificada';
+    
+    var h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Historial de Sesiones</title>'
+        + '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
+        + '<style>'
+        + 'body {font-family: Poppins, sans-serif; padding: 40px; background: #f8f9fa; color: #4A5568; line-height: 1.6;}'
+        + 'h1 {color: #8DD4E8; font-weight: 700; font-size: 28px; margin-bottom: 10px;}'
+        + 'h2 {color: #8DD4E8; font-weight: 600; font-size: 20px; margin-top: 28px; margin-bottom: 14px; border-bottom: 2px solid #B5E0EF; padding-bottom: 8px;}'
+        + 'h3 {color: #666; font-weight: 600; font-size: 14px; margin-top: 18px; margin-bottom: 10px;}'
+        + '.header {background: linear-gradient(135deg, #B5E0EF, #D9C5E2); padding: 24px; border-radius: 12px; margin-bottom: 30px;}'
+        + '.header p {margin: 8px 0; font-weight: 500;}'
+        + '.paciente-info {display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;}'
+        + '.info-field {background: white; padding: 12px; border-radius: 8px; border-left: 3px solid #8DD4E8;}'
+        + '.info-label {font-weight: 600; color: #8DD4E8; font-size: 12px; text-transform: uppercase;}'
+        + '.info-value {color: #4A5568; font-weight: 500; margin-top: 4px;}'
+        + '.sesion {background: white; padding: 20px; margin: 16px 0; border-radius: 10px; border-left: 4px solid #8DD4E8; page-break-inside: avoid;}'
+        + '.sesion-header {background: linear-gradient(135deg, #B5E0EF, #E5F6FA); padding: 12px 14px; border-radius: 8px; margin: -20px -20px 14px -20px; font-weight: 600; color: #4A5568;}'
+        + '.sec {margin: 14px 0; padding: 14px; background: #FCFDFE; border-left: 4px solid #8DD4E8; border-radius: 8px; white-space: pre-wrap; font-size: 13px;}'
+        + '.sec h4 {color: #8DD4E8; font-weight: 600; margin: 0 0 8px 0; font-size: 13px;}'
+        + '.sec-content {color: #4A5568;}'
+        + '.footer {margin-top: 40px; padding-top: 20px; border-top: 1px solid #E0E7FF; text-align: center; color: #999; font-size: 12px;}'
+        + '</style>'
+        + '</head><body>'
+        + '<h1>📋 Historial Clínico Completo</h1>'
+        + '<div class="header">'
+        + '<div class="paciente-info">'
+        + '<div class="info-field"><div class="info-label">Paciente</div><div class="info-value">' + pacienteActual.nombre + '</div></div>'
+        + '<div class="info-field"><div class="info-label">Edad</div><div class="info-value">' + edad + '</div></div>'
+        + '<div class="info-field"><div class="info-label">Diagnóstico</div><div class="info-value">' + (pacienteActual.diag || 'No especificado') + '</div></div>'
+        + '<div class="info-field"><div class="info-label">Total Sesiones</div><div class="info-value">' + ses.length + '</div></div>'
+        + '</div>'
+        + (pacienteActual.notas ? '<p><strong>Notas:</strong> ' + pacienteActual.notas + '</p>' : '')
+        + (config.nombre ? '<p><strong>Profesional:</strong> ' + config.nombre + (config.rnp ? ' (RNP: ' + config.rnp + ')' : '') + '</p>' : '')
+        + '<p><strong>Fecha de Reporte:</strong> ' + hoy + '</p>'
+        + '</div>';
+    
+    ses.forEach(function(s, i) {
+        var n = i + 1;
+        var parts = s.f.split('-');
+        var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        var fstr = d.toLocaleDateString('es-CL', { weekday: 'long', month: 'long', day: 'numeric' });
+        
+        h += '<div class="sesion">'
+            + '<div class="sesion-header">Sesión #' + n + ' · ' + fstr + '</div>';
+        
+        if (s.objs) h += '<div class="sec"><h4>🎯 Objetivos</h4><div class="sec-content">' + s.objs + '</div></div>';
+        if (s.logros) h += '<div class="sec"><h4>✨ Logros</h4><div class="sec-content">' + s.logros + '</div></div>';
+        if (s.obs) h += '<div class="sec"><h4>💬 Observaciones</h4><div class="sec-content">' + s.obs + '</div></div>';
+        if (s.barreras) h += '<div class="sec"><h4>⚠️ Barreras</h4><div class="sec-content">' + s.barreras + '</div></div>';
+        if (s.tareas) h += '<div class="sec"><h4>🏠 Tareas para Casa</h4><div class="sec-content">' + s.tareas + '</div></div>';
+        
+        h += '</div>';
+    });
+    
+    h += '<div class="footer">'
+        + 'Este documento contiene información clínica confidencial. Solo debe ser compartido con los apoderados autorizados.'
+        + '</div>'
+        + '</body></html>';
+    
+    var blob = new Blob([h], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'historial_' + pacienteActual.nombre.replace(/\s+/g, '_') + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+}
+
+function descargarSesionPDF(id) {
+    var s = sesiones.find(function(x) { return x.id === id; });
+    if (!s || !pacienteActual) return;
+    
+    var hoy = new Date().toLocaleDateString('es-CL');
+    var h = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sesión</title>'
+        + '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">'
+        + '<style>body{font-family:Poppins;padding:30px;background:#f8f9fa;color:#4A5568;} h1{color:#8DD4E8;font-weight:600;} h2{color:#8DD4E8;margin-top:24px;font-weight:600;} .sec{margin:14px 0; padding:14px; background:white; border-left:4px solid #8DD4E8; border-radius:10px; white-space:pre-wrap;}</style>'
+        + '</head><body>'
+        + '<h1>📋 Informe de Sesión</h1>'
+        + '<p><strong>Paciente:</strong> ' + pacienteActual.nombre + '</p>'
+        + '<p><strong>Fecha:</strong> ' + hoy + '</p>'
+        + (config.nombre ? '<p><strong>Profesional:</strong> ' + config.nombre + (config.rnp ? ' · ' + config.rnp : '') + '</p>' : '');
+    
+    if (s.objs) h += '<div class="sec"><h2>🎯 Objetivos</h2>' + s.objs + '</div>';
+    if (s.logros) h += '<div class="sec"><h2>✨ Logros</h2>' + s.logros + '</div>';
+    if (s.obs) h += '<div class="sec"><h2>💬 Observaciones</h2>' + s.obs + '</div>';
+    if (s.barreras) h += '<div class="sec"><h2>⚠️ Barreras</h2>' + s.barreras + '</div>';
+    if (s.tareas) h += '<div class="sec"><h2>🏠 Tareas</h2>' + s.tareas + '</div>';
+    
+    h += '</body></html>';
+    var blob = new Blob([h], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'sesion_' + pacienteActual.nombre + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+}
+
+function mostrarConfig() {
+    document.getElementById('config-nombre').value = config.nombre;
+    document.getElementById('config-rnp').value = config.rnp;
+    document.getElementById('config-titulo').value = config.titulo;
+}
+
+function guardarConfiguracion() {
+    config.nombre = document.getElementById('config-nombre').value.trim();
+    config.rnp = document.getElementById('config-rnp').value.trim();
+    config.titulo = document.getElementById('config-titulo').value.trim();
+    guardarDatos();
+    actualizarSaludo();
+    alert('✅ Configuración guardada');
+}
+
+// ============ AGENDA / CALENDARIO ============
+var citas = [];
+var mesActual = new Date();
+
+function mostrarAgenda() {
+    var c = document.getElementById('vista-agenda');
+    
+    // Hoy
+    var hoy = new Date().toISOString().split('T')[0];
+    var citasHoy = citas.filter(function(c) { return c.fecha === hoy; }).sort(function(a, b) { return a.hora.localeCompare(b.hora); });
+    
+    // Header
+    var h = '<div class="titulo">🗓️ Mi Agenda - Hoy</div>';
+    
+    var fechaObj = new Date(hoy);
+    var fechaStr = fechaObj.toLocaleDateString('es-CL', { weekday: 'long', month: 'long', day: 'numeric' });
+    h += '<div style="background: linear-gradient(135deg, var(--sky-pale), var(--rose-pale)); padding: 16px; border-radius: 14px; margin-bottom: 16px; border: 1.5px solid var(--border);">'
+        + '<div style="display: flex; justify-content: space-between; align-items: center;">'
+        + '<div><div style="color: var(--sky); font-weight: 700; font-size: 1.1rem;">📅 ' + fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1) + '</div>'
+        + '<div style="color: var(--muted); font-size: 0.85rem; margin-top: 4px;">' + citasHoy.length + ' cita' + (citasHoy.length !== 1 ? 's' : '') + '</div></div>'
+        + '<div style="text-align: right; font-size: 2rem;">🌅</div>'
+        + '</div></div>';
+    
+    // Agregar cita rápido
+    h += '<div style="background: var(--sky-pale); border: 1.5px dashed var(--sky-light); border-radius: 12px; padding: 14px; margin-bottom: 16px;">'
+        + '<div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">'
+        + '<div><label class="form-label" style="font-size: 0.85rem; margin-bottom: 6px;">Paciente</label>'
+        + '<select id="agenda-paciente" class="form-select" style="font-size: 0.85rem;"></select></div>'
+        + '<div><label class="form-label" style="font-size: 0.85rem; margin-bottom: 6px;">Hora</label>'
+        + '<input type="time" id="agenda-hora" class="form-input" style="font-size: 0.85rem;"></div>'
+        + '<button class="btn" onclick="agregarCitaAgenda()" style="background: var(--gradient); color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">➕</button>'
+        + '</div></div>';
+    
+    // Horario del día
+    h += '<div style="display: flex; flex-direction: column; gap: 10px;">';
+    
+    var horas = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+    horas.forEach(function(hora) {
+        var citaHora = citasHoy.find(function(c) { return c.hora === hora; });
+        var bg = citaHora ? 'linear-gradient(135deg, var(--sky-pale), var(--rose-pale))' : '#F9FAFB';
+        var border = citaHora ? '1.5px solid var(--border)' : '1.5px solid #E5E7EB';
+        
+        h += '<div style="background: ' + bg + '; border: ' + border + '; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">'
+            + '<div style="display: flex; align-items: center; gap: 12px; flex: 1;">'
+            + '<div style="font-weight: 700; color: var(--sky); min-width: 50px; font-size: 0.95rem;">' + hora + '</div>';
+        
+        if (citaHora) {
+            h += '<div style="flex: 1;">'
+                + '<div style="color: var(--text); font-weight: 600; font-size: 0.9rem;">' + citaHora.pacienteNombre + '</div>'
+                + '</div>'
+                + '<button onclick="eliminarCita(' + citaHora.id + ')" style="background: #FEE2E2; color: #DC2626; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600;">🗑️</button>';
+        } else {
+            h += '<div style="color: var(--faint); font-size: 0.85rem; font-style: italic;">Disponible</div>';
+        }
+        
+        h += '</div></div>';
+    });
+    
+    h += '</div>';
+    
+    if (citasHoy.length === 0) {
+        h = '<div class="titulo">🗓️ Mi Agenda - Hoy</div>'
+            + '<div style="background: linear-gradient(135deg, var(--sky-pale), var(--rose-pale)); padding: 16px; border-radius: 14px; margin-bottom: 16px; border: 1.5px solid var(--border);">'
+            + '<div style="display: flex; justify-content: space-between; align-items: center;">'
+            + '<div><div style="color: var(--sky); font-weight: 700; font-size: 1.1rem;">📅 ' + fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1) + '</div>'
+            + '<div style="color: var(--muted); font-size: 0.85rem; margin-top: 4px;">Sin citas</div></div>'
+            + '<div style="text-align: right; font-size: 2rem;">😊</div>'
+            + '</div></div>'
+            + '<div style="background: var(--sky-pale); border: 1.5px dashed var(--sky-light); border-radius: 12px; padding: 14px; margin-bottom: 16px;">'
+            + '<div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">'
+            + '<div><label class="form-label" style="font-size: 0.85rem; margin-bottom: 6px;">Paciente</label>'
+            + '<select id="agenda-paciente" class="form-select" style="font-size: 0.85rem;"></select></div>'
+            + '<div><label class="form-label" style="font-size: 0.85rem; margin-bottom: 6px;">Hora</label>'
+            + '<input type="time" id="agenda-hora" class="form-input" style="font-size: 0.85rem;"></div>'
+            + '<button class="btn" onclick="agregarCitaAgenda()" style="background: var(--gradient); color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">➕</button>'
+            + '</div></div>'
+            + '<div style="display: flex; flex-direction: column; gap: 10px;">';
+        
+        var horas = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+        horas.forEach(function(hora) {
+            h += '<div style="background: #F9FAFB; border: 1.5px solid #E5E7EB; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">'
+                + '<div style="display: flex; align-items: center; gap: 12px; flex: 1;">'
+                + '<div style="font-weight: 700; color: var(--sky); min-width: 50px; font-size: 0.95rem;">' + hora + '</div>'
+                + '<div style="color: var(--faint); font-size: 0.85rem; font-style: italic;">Disponible</div>'
+                + '</div></div>';
+        });
+        h += '</div>';
+    }
+    
+    c.innerHTML = h;
+    actualizarSelectPacientes();
+}
+
+function actualizarSelectPacientes() {
+    var select = document.getElementById('agenda-paciente');
+    select.innerHTML = '<option value="">-- Selecciona paciente --</option>';
+    pacientes.filter(function(p) { return !p.archivo; }).forEach(function(p) {
+        select.innerHTML += '<option value="' + p.id + '">' + p.nombre + '</option>';
+    });
+}
+
+function agregarCitaAgenda() {
+    var pacienteId = document.getElementById('agenda-paciente').value;
+    var fecha = document.getElementById('agenda-fecha').value;
+    var hora = document.getElementById('agenda-hora').value;
+    
+    if (!pacienteId || !fecha || !hora) {
+        alert('⚠️ Completa todos los campos');
+        return;
+    }
+    
+    var paciente = pacientes.find(function(p) { return p.id == pacienteId; });
+    citas.push({
+        id: Date.now(),
+        pacienteId: pacienteId,
+        pacienteNombre: paciente.nombre,
+        fecha: fecha,
+        hora: hora
+    });
+    
+    guardarDatos();
+    document.getElementById('agenda-paciente').value = '';
+    document.getElementById('agenda-fecha').value = '';
+    document.getElementById('agenda-hora').value = '';
+    
+    mostrarAgenda();
+    alert('✅ Cita agregada');
+}
+
+function mostrarProximasSesiones() {
+    var hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    var proximas = citas.filter(function(c) {
+        var fechaCita = new Date(c.fecha);
+        return fechaCita >= hoy;
+    }).sort(function(a, b) {
+        var fa = new Date(a.fecha + ' ' + a.hora);
+        var fb = new Date(b.fecha + ' ' + b.hora);
+        return fa - fb;
+    }).slice(0, 5);
+    
+    var container = document.getElementById('proximas-sesiones');
+    if (proximas.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--faint); padding: 20px;">Sin citas próximas</div>';
+        return;
+    }
+    
+    var h = '';
+    proximas.forEach(function(c) {
+        var fecha = new Date(c.fecha);
+        var fechaStr = fecha.toLocaleDateString('es-CL', {weekday: 'short', month: 'short', day: 'numeric'});
+        h += '<div style="background: white; padding: 12px; border-radius: 10px; border-left: 4px solid var(--sky); display: flex; justify-content: space-between; align-items: center;">'
+            + '<div>'
+            + '<div style="font-weight: 600; color: var(--text);">' + c.pacienteNombre + '</div>'
+            + '<div style="font-size: 0.85rem; color: var(--faint);">📅 ' + fechaStr + ' · 🕐 ' + c.hora + '</div>'
+            + '</div>'
+            + '<button onclick="eliminarCita(' + c.id + ')" style="background: #FEE2E2; color: #DC2626; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">🗑️</button>'
+            + '</div>';
+    });
+    container.innerHTML = h;
+}
+
+function renderizarCalendario() {
+    var nombreMes = mesActual.toLocaleDateString('es-CL', {month: 'long', year: 'numeric'});
+    document.getElementById('mes-anio').textContent = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1);
+    
+    var año = mesActual.getFullYear();
+    var mes = mesActual.getMonth();
+    var primerDia = new Date(año, mes, 1);
+    var ultimoDia = new Date(año, mes + 1, 0);
+    var diasDelMes = ultimoDia.getDate();
+    var diaInicio = primerDia.getDay();
+    
+    var grid = document.getElementById('calendario-grid');
+    grid.innerHTML = '';
+    
+    // Encabezados de días
+    var dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    dias.forEach(function(d) {
+        var header = document.createElement('div');
+        header.textContent = d;
+        header.style.cssText = 'font-weight: 600; color: var(--sky); text-align: center; padding: 8px; border-bottom: 2px solid var(--border);';
+        grid.appendChild(header);
+    });
+    
+    // Días vacíos antes del mes
+    for (var i = 0; i < diaInicio; i++) {
+        grid.appendChild(document.createElement('div'));
+    }
+    
+    // Días del mes
+    for (var dia = 1; dia <= diasDelMes; dia++) {
+        var div = document.createElement('div');
+        var fechaStr = año + '-' + String(mes + 1).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
+        var citasDelDia = citas.filter(function(c) { return c.fecha === fechaStr; });
+        
+        var es_hoy = new Date().toISOString().split('T')[0] === fechaStr;
+        var background = es_hoy ? 'var(--sky)' : 'var(--sky-pale)';
+        var color = es_hoy ? 'white' : 'var(--text)';
+        
+        div.onclick = function() { mostrarCitasDelDia(fechaStr); };
+        div.style.cssText = 'background: ' + background + '; color: ' + color + '; padding: 10px; border-radius: 8px; cursor: pointer; min-height: 60px; border: 1.5px solid var(--border); font-weight: 600; transition: all 0.2s;';
+        div.onmouseover = function() { this.style.transform = 'scale(1.05)'; };
+        div.onmouseout = function() { this.style.transform = 'scale(1)'; };
+        
+        div.innerHTML = '<div>' + dia + '</div>';
+        
+        if (citasDelDia.length > 0) {
+            div.innerHTML += '<div style="font-size: 0.7rem; margin-top: 4px; color: var(--lilac); font-weight: 700;">' + citasDelDia.length + ' cita' + (citasDelDia.length > 1 ? 's' : '') + '</div>';
+        }
+        
+        grid.appendChild(div);
+    }
+}
+
+function mesAnterior() {
+    mesActual.setMonth(mesActual.getMonth() - 1);
+    renderizarCalendario();
+}
+
+function mesSiguiente() {
+    mesActual.setMonth(mesActual.getMonth() + 1);
+    renderizarCalendario();
+}
+
+function mostrarCitasDelDia(fecha) {
+    var citasDelDia = citas.filter(function(c) { return c.fecha === fecha; }).sort(function(a, b) {
+        return a.hora.localeCompare(b.hora);
+    });
+    
+    var fechaObj = new Date(fecha);
+    var fechaStr = fechaObj.toLocaleDateString('es-CL', {weekday: 'long', month: 'long', day: 'numeric'});
+    
+    var mensaje = '📅 ' + fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1) + '\n\n';
+    if (citasDelDia.length === 0) {
+        mensaje += 'Sin citas este día';
+    } else {
+        citasDelDia.forEach(function(c) {
+            mensaje += '🕐 ' + c.hora + ' - ' + c.pacienteNombre + '\n';
+        });
+    }
+    alert(mensaje);
+}
+
+function eliminarCita(id) {
+    if (!confirm('¿Eliminar esta cita?')) return;
+    citas = citas.filter(function(c) { return c.id !== id; });
+    guardarDatos();
+    mostrarAgenda();
+    alert('✅ Cita eliminada');
+}
+
+window.onload = async function() {
+    showAuth();  // Mostrar login por defecto
+    initSupabase();
+
+    await checkAuth();  // ESPERAR a que termine antes de continuar
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('modal-editar').addEventListener('click', function(e) {
+        if (e.target === this) cerrarModal();
+    });
+    document.getElementById('modal-objetivo').addEventListener('click', function(e) {
+        if (e.target === this) cerrarModalObjetivo();
+    });
+    document.getElementById('modal-compartir').addEventListener('click', function(e) {
+        if (e.target === this) cerrarModalCompartir();
+    });
+});
+</script>
+
+</div>
+<!-- FIN APP-SCREEN -->
+
+</body>
+</html>
